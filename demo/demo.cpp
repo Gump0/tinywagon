@@ -18,8 +18,8 @@ int main(void)
     const int width { 1280 };
     const int height { 720 };
     
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION, 3);
+    glfwInit(); 
+    glfwWindowHint(GLFW_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
@@ -42,7 +42,7 @@ int main(void)
         return EXIT_FAILURE;
     }
 
-    enabledReportGlErrors();
+    enableReportGlErrors();
 
     // glfwSwapInterval(1); // vsync.
 
