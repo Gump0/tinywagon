@@ -2,70 +2,109 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
-#include <tinywagon/tinywagon.hpp>
 #include <iostream>
+#include <tinywagon/tinywagon.hpp>
+#include <openglErrorReporting.hpp>
 
-#include "openglErrorReporting.hpp"
 
-static void error_callback(int error, const char* description)
+static void error_callback(int error, const char *description)
 {
-    std::cerr << "ERROR: " << description << std::endl;
+	std::cout << "Error: " << description << "\n";
 }
+
 
 int main(void)
 {
-    // boilerplate
-    const int width { 1280 };
-    const int height { 720 };
-    
-    glfwInit(); 
-    glfwWindowHint(GLFW_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+	glfwSetErrorCallback(error_callback);
+
+	if (!glfwInit())
+		return EXIT_FAILURE;
+
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 
 #ifdef __APPLE__
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT);
+	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, 1);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 #endif
 
-    GLFWwindow* window = glfwCreateWindow(width, height, "tinywagon test window", nullptr,  nullptr);
-    if (window == nullptr)
-    {
-        std::cerr << "Failed to create GLFW window" << std::endl;
-        glfwTerminate();
-        return EXIT_FAILURE;
-    }
+	GLFWwindow *window = glfwCreateWindow(640, 480, "tinywagon example", NULL, NULL);
+	if (!window)
+	{
+		glfwTerminate();
+		return EXIT_FAILURE;
+	}
 
-    glfwMakeContextCurrent(window);
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    {
-        glfwTerminate();
-        return EXIT_FAILURE;
-    }
+	glfwMakeContextCurrent(window);
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+	{
+		glfwTerminate();
+		return EXIT_FAILURE;
+	}
 
-    enableReportGlErrors();
+	enableReportGlErrors();
 
-    // glfwSwapInterval(1); // vsync.
+	//glfwSwapInterval(1); //vsync
 
-    float lastFrameTime = (float)glfwGetTime();
+    //////////////
+    // TRIANGLE //
+    //////////////
+    float vertices[] =
+	{
+		-0.5f, -0.5f,
+		 0.5f, -0.5f,
+		 0.0f,  0.5f
+	};
 
-    while (!glfwWindowShouldClose(window))
-    {
-        float currentFrameTime = (float)glfwGetTime();
-        float deltaTime = currentFrameTime - lastFrameTime;
-        lastFrameTime = currentFrameTime;
+	GLuint vao = 0;
+	GLuint vbo = 0;
 
-        int width = 0, height = 0;
-        glfwGetFramebufferSize(window, &width, &height);
-        glViewport(0, 0, width, height);
-        glClearColor(0, 0, 0.5, 1);
-        glClear(GL_COLOR_BUFFER_BIT);
+	glGenVertexArrays(1, &vao);
+	glGenBuffers(1, &vbo);
 
-        glfwSwapBuffers(window);
-        glfwPollEvents();
-    }
+	glBindVertexArray(vao);
 
-    glfwDestroyWindow(window);
-    glfwTerminate();
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    return EXIT_SUCCESS;
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
+
+	glEnableVertexAttribArray(0);
+	// ------------------------------------------
+
+	tw::Shader shader;
+	shader.createDefaultShader();
+
+
+	float lastFrameTime = (float)glfwGetTime();
+
+	while (!glfwWindowShouldClose(window))
+	{
+		float currentFrameTime = (float)glfwGetTime();
+		float deltaTime = currentFrameTime - lastFrameTime;
+		lastFrameTime = currentFrameTime;
+
+		int width = 0, height = 0;
+		glfwGetFramebufferSize(window, &width, &height);
+		glViewport(0, 0, width, height);
+		glClearColor(0, 0, 0.5, 1);
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		shader.bind();
+		glBindVertexArray(vao);
+		glDrawArrays(GL_TRIANGLES, 0, 3);
+
+
+		glfwSwapBuffers(window);
+		glfwPollEvents();
+	}
+
+	glfwDestroyWindow(window);
+
+	glfwTerminate();
+
+	return 0;
 }
