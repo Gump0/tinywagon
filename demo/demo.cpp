@@ -12,10 +12,8 @@ static void error_callback(int error, const char *description)
 	std::cout << "Error: " << description << "\n";
 }
 
-
 int main(void)
 {
-
 	glfwSetErrorCallback(error_callback);
 
 	if (!glfwInit())
@@ -77,7 +75,6 @@ int main(void)
 
 	tw::Shader shader;
 	shader.createDefaultShader();
-
 
 	float lastFrameTime = (float)glfwGetTime();
 

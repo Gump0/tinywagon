@@ -4,6 +4,44 @@
 
 namespace tw
 {
+    ////////////////////
+    // ERROR HANDLING //
+    ////////////////////
+    
+    void defaultErrorFunc(const char* msg, void* userDefinedData)
+    {
+        std::cerr << "Tinywagon error: " << msg << std::endl;
+    }
+
+    static errorFuncType* currentErrorFunc = defaultErrorFunc;
+
+    static void* userDefinedData = 0;
+    void setUserDefinedData(void* data)
+    {
+        userDefinedData = data;
+    }
+
+    void setErrorFuncCallback(errorFuncType* newFunc)
+    {
+        currentErrorFunc = newFunc;
+    }
+
+    errorFuncType* getErrorFuncCallback()
+    {
+        return currentErrorFunc;
+    }
+
+    // used internally
+    void reportError(const char* errorMessage)
+    {
+        if (!errorMessage || !currentErrorFunc)
+        {
+            return;
+        }
+
+        currentErrorFunc(errorMessage, userDefinedData);
+    }
+
     /////////////
     // SHADERS //
     ///////////// 
@@ -67,7 +105,7 @@ namespace tw
 
             message[l - 1] = 0;
 
-            std::cerr << message << std::endl;
+            reportError(message);
 
             delete[] message;
         }
@@ -92,7 +130,7 @@ namespace tw
 
             glGetProgramInfoLog(id, l, &l, message);
 
-            std::cerr << message << std::endl;
+            reportError(message);
 
             delete[] message;
         }
@@ -138,7 +176,7 @@ namespace tw
         if (!fileFont.is_open())
         {
             std::string e = "error opening: "; e += filePath;
-            std::cerr << e.c_str() << std::endl;
+            reportError(e.c_str());
             return;
         }
 
