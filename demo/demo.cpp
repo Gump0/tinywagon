@@ -29,7 +29,7 @@ int main(void)
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 #endif
 
-	GLFWwindow *window = glfwCreateWindow(640, 480, "tinywagon example", NULL, NULL);
+	GLFWwindow *window = glfwCreateWindow(640, 480, "Pixy example", NULL, NULL);
 	if (!window)
 	{
 		glfwTerminate();
@@ -47,14 +47,13 @@ int main(void)
 
 	//glfwSwapInterval(1); //vsync
 
-    //////////////
-    // TRIANGLE //
-    //////////////
-    float vertices[] =
+	//---------------- TRIANGLE ----------------
+	//position, color, uv
+	float vertices[] =
 	{
-		-0.5f, -0.5f,
-		 0.5f, -0.5f,
-		 0.0f,  0.5f
+		-0.5f, -0.5f,  1,1,1,1,  0.f, 0.f, 
+		 0.5f, -0.5f,  1,1,1,1,  1.f, 0.f,
+		 0.0f,  0.5f,  1,1,1,1,  0.f, 1.f,
 	};
 
 	GLuint vao = 0;
@@ -68,13 +67,20 @@ int main(void)
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 8, 0);
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(float) * 8, (void*)(sizeof(float) * 2));
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 8, (void*)(sizeof(float) * 6));
 
 	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+	glEnableVertexAttribArray(2);
 	// ------------------------------------------
 
 	tw::Shader shader;
 	shader.createDefaultShader();
+
+	tw::Texture texture(RESOURCES_PATH "grass.png");
+	texture.bind();
 
 	float lastFrameTime = (float)glfwGetTime();
 
@@ -91,9 +97,9 @@ int main(void)
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		shader.bind();
+		glUniform1i(shader.u_sampler, 0);
 		glBindVertexArray(vao);
 		glDrawArrays(GL_TRIANGLES, 0, 3);
-
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();

@@ -77,8 +77,8 @@ namespace tw
 
     void main()
     {
-        //color = v_color * texture2D(u_sampler, v_uv);
-        color = vec4(1, 0, 0, 1);
+        color = v_color * texture2D(u_sampler, v_uv);
+        // color = vec4(1, 0, 0, 1);
     }
         )";
 
@@ -192,5 +192,198 @@ namespace tw
         createShader(fileData);
 
         delete[] fileData;
+    }
+    
+    /////////////
+    // TEXTURE //
+    /////////////
+
+    glm::ivec2 Texture::GetSize()
+    {
+        if (id == 0)
+            return{};
+
+        glm::ivec2 size = {};
+        glBindTexture(GL_TEXTURE_2D, id);
+        glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &size.x);
+        glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &size.y);
+        return size;
+    }
+
+    void Texture::createFromBuffer(const char* image_data, const int width, const int height,
+        bool pixelated, bool useMipMap)
+    {
+        GLuint id = 0;
+
+        glActiveTexture(GL_TEXTURE0);
+
+        glGenTextures(1, &id);
+        glBindTexture(GL_TEXTURE_2D, id);
+
+        if (pixelated)
+        {
+            if (useMipMap)
+            {
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+            }
+            else
+            {
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            }
+
+            glTextureParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        }
+        else
+        {
+            if (useMipMap)
+            {
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+            }
+            else
+            {
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            }
+
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        }
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image_data);
+
+        if (useMipMap)
+            glGenerateMipmap(GL_TEXTURE_2D);
+
+        this->id = id;
+    }
+
+    void Texture::create1PxSquare(const char* b)
+    {
+        if (b == nullptr)
+        {
+            const unsigned char buff[] =
+            {
+                0xff,
+                0xff,
+                0xff,
+                0xff
+            };
+
+            createFromBuffer((char*)buff, 1, 1);
+        }
+        else
+        {
+            createFromBuffer(b, 1, 1);
+        }
+    }
+
+    void Texture::createFromFileData(const unsigned char* image_file_data, const size_t image_file_size,
+        bool pixelated, bool useMipMap)
+    {
+        stbi_set_flip_vertically_on_load(true);
+
+        int width = 0;
+        int height = 0;
+        int channels = 0;
+
+        const unsigned char* decodedImage = stbi_load_from_memory(image_file_data, (int)image_file_size, &width, &height, &channels, 4);
+
+        if (!decodedImage)
+            return;
+
+        createFromBuffer((const char*)decodedImage, width, height, pixelated, useMipMap);
+
+        STBI_FREE(decodedImage);
+    }
+
+    void Texture::loadFromFile(const char* fileName, bool pixelated, bool useMipMap)
+    {
+        std::ifstream file(fileName, std::ios::binary);
+
+        if (!file.is_open())
+        {
+            std::string s = "error opening :";
+            s += fileName;
+            reportError(s.c_str());
+            return;
+        }
+
+        int fileSize = 0;
+        file.seekg(0, std::ios::end);
+        fileSize = (int)file.tellg();
+        file.seekg(0, std::ios::beg);
+        unsigned char* fileData = new unsigned char[fileSize];
+        file.read((char*)fileData, fileSize);
+        file.close();
+
+        createFromFileData(fileData, fileSize, pixelated, useMipMap);
+
+        delete[] fileData;
+    }
+
+    size_t Texture::getMemorySize(int mipLevel, glm::ivec2* outsize)
+    {
+        glBindTexture(GL_TEXTURE_2D, id);
+
+        glm::ivec2 stub = {};
+        
+        if (!outsize)
+        {
+            outsize = &stub;
+        }
+        
+        glGetTexLevelParameteriv(GL_TEXTURE_2D, mipLevel, GL_TEXTURE_WIDTH, &outsize->x);
+        glGetTexLevelParameteriv(GL_TEXTURE_2D, mipLevel, GL_TEXTURE_HEIGHT, &outsize->y);
+
+        glBindTexture(GL_TEXTURE_2D, 0);
+
+        return outsize->x * outsize->y * 4;
+    }
+
+    void Texture::readTextureData(void* buffer, int miplevel)
+    {
+        glBindTexture(GL_TEXTURE_2D, id);
+        glGetTexImage(GL_TEXTURE_2D, miplevel, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+    }
+
+    std::vector<unsigned char> Texture::readTextureData(int mipLevel, glm::ivec2* outsize)
+    {
+        glBindTexture(GL_TEXTURE_2D, id);
+
+        glm::ivec2 stub = {};
+        
+        if (!outsize)
+        {
+            outsize = &stub;
+        }
+        
+        glGetTexLevelParameteriv(GL_TEXTURE_2D, mipLevel, GL_TEXTURE_WIDTH, &outsize->x);
+        glGetTexLevelParameteriv(GL_TEXTURE_2D, mipLevel, GL_TEXTURE_HEIGHT, &outsize->y);
+
+        std::vector<unsigned char> data;
+        data.resize(outsize->x * outsize->y * 4);
+        glGetTexImage(GL_TEXTURE_2D, mipLevel, GL_RGBA, GL_UNSIGNED_BYTE, data.data());
+
+        glBindTexture(GL_TEXTURE_2D, 0);
+
+        return data;
+    }
+
+    void Texture::bind(unsigned int sample)
+    {
+        glActiveTexture(GL_TEXTURE_2D + sample);
+        glBindTexture(GL_TEXTURE_2D, id);
+    }
+
+    void Texture::unbind()
+    {
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+
+    void Texture::cleanup()
+    {
+        glDeleteTextures(1, &id);
+        *this = {};
     }
 };
