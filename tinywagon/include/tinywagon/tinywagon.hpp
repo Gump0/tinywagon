@@ -171,4 +171,24 @@ namespace tw
         // used to to draw frame to screen.
         void flush(bool dontBindAnyFBO = false, bool dontClearDrawData = false, bool dontEnableGLFeatures = false);
     };
+
+    // A few default color constants for easy access :)
+    #define RED glm::vec4(1, 0, 0, 1)
+    #define GREEN glm::vec4(0, 1, 0, 1)
+    #define BLUE glm::vec4(0, 0, 1, 1)
+    #define MAGENTA glm::vec4(1, 0, 1, 1)
+    #define PURPLE glm::vec4(0.4, 0.2, 0.7, 1)
+    #define YELLOW glm::vec4(1, 1, 0, 1)
+    #define ORANGE glm::vec4(1, 0.5, 0.1, 1)
+    #define PINK glm::vec4(1, 0.75, 0.8, 1)
+    #define CYAN glm::vec4(0, 1, 1, 1)
+    #define WHITE glm::vec4(1, 1, 1, 1)
+    #define BLACK glm::vec4(0, 0, 0, 1)
+    #define GRAY glm::vec4(0.5, 0.5, 0.5, 1)
+    #define BROWN glm::vec4(0.4, 0.26, 0.13, 1)
+    #define TEAL glm::vec4(0, 0.5, 0.5, 1)
+    #define LIME glm::vec4(0.75, 1, 0, 1)
+    #define NAVY glm::vec4(0, 0, 0.5, 1)
+    #define GOLD glm::vec4(1, 0.84, 0, 1)
+    #define TRANSPARENT glm::vec4(0, 0, 0, 0)
 };
