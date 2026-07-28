@@ -75,6 +75,7 @@ int main(void)
 	glEnableVertexAttribArray(1);
 	glEnableVertexAttribArray(2);
 	// ------------------------------------------
+	tw::init();
 
 	tw::Shader shader;
 	shader.createDefaultShader();
@@ -104,6 +105,8 @@ int main(void)
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
+
+	tw::cleanup();
 
 	glfwDestroyWindow(window);
 

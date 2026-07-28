@@ -42,6 +42,41 @@ namespace tw
         currentErrorFunc(errorMessage, userDefinedData);
     }
 
+    /////////////////////////////////////////
+    // LIBRARY SETUP, CLEANUP AND  RUNTIME //
+    /////////////////////////////////////////
+    static bool hasInitialized = false;
+    static Shader defaultShader = { };
+    static Texture white1pxSquareTexture = { };
+
+    void init()
+    {
+        if (hasInitialized)
+            return;
+
+        // if we don't have OpenGL functions, we can assume that OpenGL isn't setup correctly.
+        // so let's check for this random OpenGL function.
+        if (!glGenTextures)
+        {
+            reportError("OpenGL failed to initialize,\ have you forgot to call gladLoad()? \
+                or gladLoadGLLoader() or glfwInit()?");
+
+            return;
+        }
+
+        defaultShader.createDefaultShader();
+        white1pxSquareTexture.create1PxSquare();
+
+        hasInitialized = true;
+    }
+
+    void cleanup()
+    {
+        white1pxSquareTexture.cleanup();
+        defaultShader.clear();
+        hasInitialized = false;
+    }
+
     /////////////
     // SHADERS //
     ///////////// 
@@ -231,7 +266,7 @@ namespace tw
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
             }
 
-            glTextureParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         }
         else
         {
@@ -372,7 +407,7 @@ namespace tw
 
     void Texture::bind(unsigned int sample)
     {
-        glActiveTexture(GL_TEXTURE_2D + sample);
+        glActiveTexture(GL_TEXTURE0 + sample);
         glBindTexture(GL_TEXTURE_2D, id);
     }
 

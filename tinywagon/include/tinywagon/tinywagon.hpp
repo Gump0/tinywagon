@@ -6,6 +6,12 @@
 
 namespace tw
 {
+    // initalize the library, call once before using the library.
+    void init();
+
+    // deinitializes the library, call on application quit.
+    void cleanup();
+
     // standard error function, this writes to the console
     void defaultErrorFunc(const char* msg, void* userDefinedData);
 
