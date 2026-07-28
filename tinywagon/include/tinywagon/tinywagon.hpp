@@ -104,4 +104,71 @@ namespace tw
 
         void cleanup();
     };
+
+    // Renderer class where all 2D rendering logic is handled
+    struct Renderer2D
+    {
+        Renderer2D() = default;
+        Renderer2D(Renderer2D &other) = delete;
+        Renderer2D(Renderer2D &&other) = delete;
+        Renderer2D operator=(Renderer2D other) = delete;
+        Renderer2D operator=(Renderer2D &other) = delete;
+        Renderer2D operator=(Renderer2D &&other) = delete;
+
+        // creates the renderer
+        // fbo is the frame buffer the renderer will draw to, 0 means drawings to the screen
+        void create(GLuint fbo = 0);
+
+        // clears the renderer object's recourses
+        // but does not clean up user setup data such as textures, fonts or fbos beware!
+        void cleanup();
+
+        GLuint FBO = 0;
+
+        GLuint triangleDataBuffer = 0;
+        GLuint vao = 0;
+
+        // window metrics, should be up to date at all times.
+        int windowW = -1;
+        int windowH = -1;
+        void updateWindowMetrics(int width, int height)
+        {
+            windowW = std::max(width, 0);
+            windowH = std::max(height, 0);
+        };
+
+        struct TriangleVertexData
+        {
+            glm::vec4 position = { };
+            glm::vec4 color = { };
+            glm::vec2 uvPosition = { };
+        };
+
+        struct TriangleData
+        {
+            TriangleVertexData v1 = { };
+            TriangleVertexData v2 = { };
+            TriangleVertexData v3 = { };
+        };
+
+        std::vector<TriangleData> renderTriangleData;
+
+        Shader shader;
+
+        // simply resets the current shader to the default shader.
+        // used internally.
+        void resetShader();
+
+		void renderTriangleFromNormalizedPositions(const glm::vec4 &p1, const glm::vec4 &p2, const glm::vec4 &p3,
+			Texture texture, glm::vec4 textureCoords, glm::vec4 colors);
+
+		void renderTriangleFromNormalizedPositions(const glm::vec4 &p1, const glm::vec4 &p2, const glm::vec4 &p3,
+			Texture texture, const glm::vec2 textureCoords[3], const glm::vec4 colors[3]);
+
+        // not to be confused with cleanup, this clears the renderer of draw data to reset the frame
+        void clearDrawData();
+
+        // used to to draw frame to screen.
+        void flush(bool dontBindAnyFBO = false, bool dontClearDrawData = false, bool dontEnableGLFeatures = false);
+    };
 };

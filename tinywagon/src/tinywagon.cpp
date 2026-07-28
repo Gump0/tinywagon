@@ -421,4 +421,176 @@ namespace tw
         glDeleteTextures(1, &id);
         *this = {};
     }
+
+    //////////////
+    // RENDERER //
+    //////////////
+
+    void Renderer2D::create(GLuint fbo)
+    {
+        if (!hasInitialized)
+        {
+            reportError("Library not initialized. Have you forgot to run tw::init()??");
+        }
+
+        FBO = fbo;
+
+        renderTriangleData.reserve(20);
+
+        resetShader();
+
+        glGenVertexArrays(1, &vao);
+        glBindVertexArray(vao);
+
+        glGenBuffers(1, &triangleDataBuffer);
+        glBindBuffer(GL_ARRAY_BUFFER, triangleDataBuffer);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(float) * 10, (void*)0);
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(float) * 10, (void*)(sizeof(float) * 4));
+        glEnableVertexAttribArray(2);
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 10, (void*)(sizeof(float) * 8));
+
+        glBindVertexArray(0);
+    }
+    
+    void Renderer2D::resetShader()
+    {
+        shader = defaultShader;
+    }
+
+    void Renderer2D::cleanup()
+    {
+        glDeleteVertexArrays(1, &vao);
+        glDeleteBuffers(1, &triangleDataBuffer);
+
+        vao = 0;
+        triangleDataBuffer = 0;
+    }
+
+	void Renderer2D::renderTriangleFromNormalizedPositions(const glm::vec4 &p1, const glm::vec4 &p2, const glm::vec4 &p3,
+		Texture texture, glm::vec4 textureCoords, glm::vec4 colors)
+	{
+		glm::vec4 colorsVector[3] = {colors, colors, colors};
+
+		float u0 = textureCoords.x;
+		float v0 = textureCoords.y;
+		float u1 = textureCoords.z;
+		float v1 = textureCoords.w;
+
+		glm::vec2 textureCoordsVector[3] = {{u0, v0}, {u1, v0}, {u1, v1}};
+		renderTriangleFromNormalizedPositions(p1, p2, p3, texture, textureCoordsVector, colorsVector);
+
+	}
+
+	void Renderer2D::renderTriangleFromNormalizedPositions(const glm::vec4 &p1, const glm::vec4 &p2, const glm::vec4 &p3,
+		Texture texture, const glm::vec2 textureCoords[3], const glm::vec4 colors[3])
+	{
+
+		TriangleData triangleData;
+
+		TriangleVertexData first = {p1, colors[0], textureCoords[0]};
+		TriangleVertexData second = {p2, colors[1], textureCoords[1]};
+		TriangleVertexData third = {p3, colors[2], textureCoords[2]};
+
+		triangleData.v1 = first;
+		triangleData.v2 = second;
+		triangleData.v3 = third;
+
+		renderTriangleData.push_back(triangleData);
+	}
+
+    void Renderer2D::clearDrawData()
+    {
+        renderTriangleData = { };
+    }
+
+    void Renderer2D::flush(bool dontBindAnyFBO, bool dontClearDrawData, bool dontEnableGLFeatures)
+    {
+        if (!hasInitialized)
+        {
+            reportError("Library not initialized. Have you forgot to run tw::init()??");
+        
+            if (!dontClearDrawData)
+            {
+                clearDrawData();
+            }
+
+            return;
+        }
+
+        if (!vao)
+        {
+            reportError("Renderer not initialized. Have you forgot to run tw::Renderer2D::create()??");
+        
+            if (!dontClearDrawData)
+            {
+                clearDrawData();
+            }
+
+            return;
+        }
+
+        // for the case that the window is minimized
+        if (windowH == 0 || windowW == 0)
+        {
+            clearDrawData();
+        }
+
+        if (windowH < 0 || windowW < 0)
+        {
+            if (!dontClearDrawData)
+            {
+                clearDrawData();
+            }   
+
+            reportError("Negative windowW or windowH, have you forgotten to call updateWindowMetrics(w, h)??");
+
+            return;
+        }
+
+        if (!dontBindAnyFBO)
+        {
+            glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+        }   
+
+        if (!dontEnableGLFeatures)
+        {
+            glEnable(GL_BLEND);
+            glDisable(GL_DEPTH_TEST);
+            glBlendEquation(GL_FUNC_ADD);
+            glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+        }
+
+        // draw logic
+        if (!renderTriangleData.empty())
+        {
+            glBindVertexArray(vao);
+
+            glViewport(0, 0, windowW, windowH);
+            glUseProgram(shader.id);
+            glUniform1i(shader.u_sampler, 0);
+
+            // buffer orphaning.
+            // small optmization made to help tell the GPU driver that new buffer data
+            // will come in to replace the old buffer data.
+            glBindBuffer(GL_ARRAY_BUFFER, triangleDataBuffer);
+            glBufferData(GL_ARRAY_BUFFER, renderTriangleData.size() * sizeof(renderTriangleData[0]), 
+                renderTriangleData.data(), GL_STREAM_DRAW);
+
+            glDrawArrays(GL_TRIANGLES, 0, 3 * renderTriangleData.size());
+
+            glBindVertexArray(0);
+        }
+
+        if (!dontClearDrawData)
+        {
+            clearDrawData();
+        }
+
+        if (!dontBindAnyFBO)
+        {
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        }
+    }
 };

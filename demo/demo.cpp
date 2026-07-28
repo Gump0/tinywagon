@@ -77,6 +77,9 @@ int main(void)
 	// ------------------------------------------
 	tw::init();
 
+	tw::Renderer2D renderer;
+	renderer.create();
+
 	tw::Shader shader;
 	shader.createDefaultShader();
 
@@ -93,14 +96,20 @@ int main(void)
 
 		int width = 0, height = 0;
 		glfwGetFramebufferSize(window, &width, &height);
+
+		renderer.updateWindowMetrics(width, height);
+
 		glViewport(0, 0, width, height);
 		glClearColor(0, 0, 0.5, 1);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		shader.bind();
-		glUniform1i(shader.u_sampler, 0);
-		glBindVertexArray(vao);
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+		renderer.renderTriangleFromNormalizedPositions(
+			{-0.5, -0.5, 0, 1}, {0.5, -0.5, 0, 1}, {0.0, 0.5, 0, 1}, { }, {0, 0, 1, 1}, {1, 1, 1, 1});
+
+		renderer.renderTriangleFromNormalizedPositions(
+			{-0.1, -0.1, 0, 1}, {0.1, -0.1, 0, 1}, {0.0, 0.5, 0, 1}, { }, {0, 0, 1, 1}, {1, 0, 0, 0.5});
+
+		renderer.flush();
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
