@@ -85,6 +85,7 @@ int main(void)
 
 	tw::Texture texture(RESOURCES_PATH "grass.png");
 	texture.bind();
+	std::cout << "loading texture from: " << RESOURCES_PATH << "grass.png" << std::endl;
 
 	float lastFrameTime = (float)glfwGetTime();
 
@@ -108,6 +109,8 @@ int main(void)
 
 		renderer.renderTriangleFromNormalizedPositions(
 			{-0.1, -0.1, 0, 1}, {0.1, -0.1, 0, 1}, {0.0, 0.5, 0, 1}, { }, {0, 0, 1, 1}, PURPLE);
+
+		renderer.renderRect({ 50, 50, 100, 100}, texture, {1, 1, 1, 1}, {0, 0, 1, 1}, 0);
 
 		renderer.flush();
 

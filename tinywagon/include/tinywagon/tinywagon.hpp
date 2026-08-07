@@ -2,6 +2,7 @@
 #include <glad/glad.h>
 #include <stb_image/stb_image.h>
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include <vector>
 
 namespace tw
@@ -152,6 +153,7 @@ namespace tw
         };
 
         std::vector<TriangleData> renderTriangleData;
+        std::vector<Texture> textureData;
 
         Shader shader;
 
@@ -159,11 +161,17 @@ namespace tw
         // used internally.
         void resetShader();
 
+        // render a triange to the screen using opengl normalized coordinates
 		void renderTriangleFromNormalizedPositions(const glm::vec4 &p1, const glm::vec4 &p2, const glm::vec4 &p3,
 			Texture texture, glm::vec4 textureCoords, glm::vec4 colors);
-
+        
+        // ^^ but can utlize vec2 array for the texture coords 
 		void renderTriangleFromNormalizedPositions(const glm::vec4 &p1, const glm::vec4 &p2, const glm::vec4 &p3,
 			Texture texture, const glm::vec2 textureCoords[3], const glm::vec4 colors[3]);
+
+        // draw a rectangle with color and/or texture (position = {x, y, width, height})
+        void renderRect(const glm::vec4 &position, Texture texture = {}, glm::vec4 colors = {1,1,1,1},
+            glm::vec4 textureCoords = {0,0,1,1}, float rotationRadians = 0.0f, glm::vec2 pivot = {0, 0});
 
         // not to be confused with cleanup, this clears the renderer of draw data to reset the frame
         void clearDrawData();

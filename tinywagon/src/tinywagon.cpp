@@ -58,8 +58,8 @@ namespace tw
         // so let's check for this random OpenGL function.
         if (!glGenTextures)
         {
-            reportError("OpenGL failed to initialize,\ have you forgot to call gladLoad()? \
-                or gladLoadGLLoader() or glfwInit()?");
+            reportError("OpenGL failed to initialize, have you forgot to call gladLoad()? "
+                "or gladLoadGLLoader() or glfwInit()?");
 
             return;
         }
@@ -325,7 +325,10 @@ namespace tw
         const unsigned char* decodedImage = stbi_load_from_memory(image_file_data, (int)image_file_size, &width, &height, &channels, 4);
 
         if (!decodedImage)
+        {
+            reportError("Error decode image failure: ");
             return;
+        }
 
         createFromBuffer((const char*)decodedImage, width, height, pixelated, useMipMap);
 
@@ -498,11 +501,62 @@ namespace tw
 		triangleData.v3 = third;
 
 		renderTriangleData.push_back(triangleData);
+
+        if (texture.id == 0)
+        {
+            texture = white1pxSquareTexture;
+        }
+
+        textureData.push_back(texture);
 	}
+
+    void Renderer2D::renderRect(const glm::vec4 &position, Texture texture, glm::vec4 colors,
+        glm::vec4 textureCoords, float rotationRadians, glm::vec2 pivot)
+    {
+        if (windowH == 0 || windowW == 0)
+        {
+            return;
+        }
+
+        glm::mat4 projection = glm::ortho(0.0f, (float)windowW, (float)windowH, 0.0f, -1.0f, 1.0f);
+
+        float x = position.x;
+        float y = position.y;
+        float width = position.z;
+        float height = position.w;
+
+        glm::vec2 center = {x + width / 2.0f, y + height / 2.0f};
+        glm::vec2 pivotPosition = center + pivot;
+
+        glm::mat4 model(1.0f);
+        model = glm::translate(model, glm::vec3(pivotPosition, 0.0f));
+        model = glm::rotate(model, rotationRadians, glm::vec3(0.0f, 0.0f, 1.0f));
+        model = glm::translate(model, glm::vec3(-pivotPosition, 0.0f));
+
+        glm::mat4 transform = projection * model;
+
+        glm::vec4 topLeft = transform * glm::vec4(x, y, 0.0f, 1.0f);
+        glm::vec4 topRight = transform * glm::vec4(x + width, y, 0.0f, 1.0f);
+        glm::vec4 bottomLeft = transform * glm::vec4(x, y + height, 0.0f, 1.0f);
+        glm::vec4 bottomRight = transform * glm::vec4(x + width, y + height, 0.0f, 1.0f);
+
+        glm::vec2 uvTopLeft = { textureCoords.x, textureCoords.w };
+        glm::vec2 uvTopRight = { textureCoords.z, textureCoords.w };
+        glm::vec2 uvBottomRight = { textureCoords.x, textureCoords.y };
+        glm::vec2 uvBottomLeft = { textureCoords.z, textureCoords.y };
+
+        glm::vec4 colorsVector[3] = { colors, colors, colors };
+        glm::vec2 firstTriangleTextureCoords[3] = { uvTopLeft, uvTopRight, uvBottomRight };
+        glm::vec2 secondTriangleTextureCoords[3] = { uvTopLeft, uvBottomRight, uvBottomLeft };
+
+        renderTriangleFromNormalizedPositions(topLeft, topRight, bottomRight, texture, firstTriangleTextureCoords, colorsVector);
+        renderTriangleFromNormalizedPositions(topLeft, bottomRight, bottomLeft, texture, firstTriangleTextureCoords, colorsVector);
+    }
 
     void Renderer2D::clearDrawData()
     {
         renderTriangleData = { };
+        textureData = { };
     }
 
     void Renderer2D::flush(bool dontBindAnyFBO, bool dontClearDrawData, bool dontEnableGLFeatures)
@@ -578,7 +632,29 @@ namespace tw
             glBufferData(GL_ARRAY_BUFFER, renderTriangleData.size() * sizeof(renderTriangleData[0]), 
                 renderTriangleData.data(), GL_STREAM_DRAW);
 
-            glDrawArrays(GL_TRIANGLES, 0, 3 * renderTriangleData.size());
+            // render in batches
+            {
+                const int size = textureData.size();
+                int pos = 0;
+                unsigned int id = textureData[0].id;
+
+                textureData[0].bind();
+
+                for (int i = 1; i < size; i++)
+                {
+                    if (textureData[i].id != id)
+                    {
+                        glDrawArrays(GL_TRIANGLES, pos * 3, 3 * (i - pos));
+
+                        pos = i;
+                        id = textureData[i].id;
+
+                        textureData[i].bind();
+                    }
+                }
+
+                glDrawArrays(GL_TRIANGLES, 0, 3 * renderTriangleData.size());
+            }
 
             glBindVertexArray(0);
         }
