@@ -425,6 +425,23 @@ namespace tw
         *this = {};
     }
 
+    ////////////
+    // CAMERA // 
+    ////////////
+
+    glm::mat4 Camera::getMatrix(float w, float h)
+    {
+        glm::vec2 center = {w / 2.0f, h / 2.0f};
+
+        glm::mat4 matrix {1.0f};
+        matrix = glm::translate(matrix, glm::vec3(center, 0.0f));
+        matrix = glm::rotate(matrix, -rotation, glm::vec3(0.0f, 0.0f, 1.0f));
+        matrix = glm::scale(matrix, glm::vec3(zoom, zoom, 1.0f));
+        matrix = glm::translate(matrix, glm::vec3(-positionTopLeftCorner - center, 0.0f));
+
+        return matrix;
+    }
+
     //////////////
     // RENDERER //
     //////////////
@@ -483,13 +500,11 @@ namespace tw
 
 		glm::vec2 textureCoordsVector[3] = {{u0, v0}, {u1, v0}, {u1, v1}};
 		renderTriangleFromNormalizedPositions(p1, p2, p3, texture, textureCoordsVector, colorsVector);
-
 	}
 
 	void Renderer2D::renderTriangleFromNormalizedPositions(const glm::vec4 &p1, const glm::vec4 &p2, const glm::vec4 &p3,
 		Texture texture, const glm::vec2 textureCoords[3], const glm::vec4 colors[3])
 	{
-
 		TriangleData triangleData;
 
 		TriangleVertexData first = {p1, colors[0], textureCoords[0]};
@@ -533,7 +548,7 @@ namespace tw
         model = glm::rotate(model, rotationRadians, glm::vec3(0.0f, 0.0f, 1.0f));
         model = glm::translate(model, glm::vec3(-pivotPosition, 0.0f));
 
-        glm::mat4 transform = projection * model;
+        glm::mat4 transform = projection * camera.getMatrix((float)windowW, (float)windowH) * model;
 
         glm::vec4 topLeft = transform * glm::vec4(x, y, 0.0f, 1.0f);
         glm::vec4 topRight = transform * glm::vec4(x + width, y, 0.0f, 1.0f);

@@ -106,6 +106,22 @@ namespace tw
         void cleanup();
     };
 
+    // handles all logic related to the camera system
+    struct Camera
+    { 
+        glm::vec2 positionTopLeftCorner { };
+
+        // camera rotation in radians
+        float rotation = 0.0f;
+
+        // camera zoom (scaling 1.0f = default)
+        float zoom = 1.0f;
+
+        void setDefault() { *this = Camera{}; }
+
+        glm::mat4 getMatrix(float w, float h);
+    };
+
     // Renderer class where all 2D rendering logic is handled
     struct Renderer2D
     {
@@ -156,6 +172,7 @@ namespace tw
         std::vector<Texture> textureData;
 
         Shader shader;
+        Camera camera;
 
         // simply resets the current shader to the default shader.
         // used internally.

@@ -104,6 +104,21 @@ int main(void)
 		glClearColor(0, 0, 0.5, 1);
 		glClear(GL_COLOR_BUFFER_BIT);
 
+		glm::vec2 movement = {};
+		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) { movement.y -= 1.0f; }
+		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) { movement.y += 1.0f; }
+		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) { movement.x -= 1.0f; }
+		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) { movement.x += 1.0f; }
+
+		if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) { renderer.camera.zoom -= 0.001f; }
+		if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) { renderer.camera.zoom += 0.001f; }
+
+		if (glm::length(movement) > 0.0f)
+		{
+			float speed = 250;
+			renderer.camera.positionTopLeftCorner += glm::normalize(movement) * speed * deltaTime;
+		}
+
 		renderer.renderTriangleFromNormalizedPositions(
 			{-0.5, -0.5, 0, 1}, {0.5, -0.5, 0, 1}, {0.0, 0.5, 0, 1}, { }, {0, 0, 1, 1}, {1, 1, 1, 1});
 
