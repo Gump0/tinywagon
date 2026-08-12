@@ -119,7 +119,20 @@ namespace tw
 
         void setDefault() { *this = Camera{}; }
 
+        // used to follow an object (like a player for example)
+        // the followed glm::vector2 position will be placed in the center of the screen by default.
+        // min is for the minimum distance for the camera to start moving and max is the same.
+        // w and h are the dimensions of the camera window.
+        // and speed is for interperlation speed of the camera.
+        void follow(glm::vec2 pos, float w, float h, float speed = 99999, float min = 0, float max = 0);
+
         glm::mat4 getMatrix(float w, float h);
+
+        // given the position and this camera, return where the point will end up in screen coordinates
+        glm::vec2 worldToScreen(glm::vec2 worldPos, float w, float h);
+
+        // given the screen coordinates and this camera, return where the point will end up in world coordinates
+        glm::vec2 screenToWorld(glm::vec2 screenPos, float w, float h);
     };
 
     // Renderer class where all 2D rendering logic is handled
@@ -185,6 +198,10 @@ namespace tw
         // ^^ but can utlize vec2 array for the texture coords 
 		void renderTriangleFromNormalizedPositions(const glm::vec4 &p1, const glm::vec4 &p2, const glm::vec4 &p3,
 			Texture texture, const glm::vec2 textureCoords[3], const glm::vec4 colors[3]);
+
+        // TODO : make pixel coord vers of ^^
+        // similar to how renderRect was programmed.
+        // void renderTriangle
 
         // draw a rectangle with color and/or texture (position = {x, y, width, height})
         void renderRect(const glm::vec4 &position, Texture texture = {}, glm::vec4 colors = {1,1,1,1},

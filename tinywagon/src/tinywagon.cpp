@@ -442,6 +442,51 @@ namespace tw
         return matrix;
     }
 
+    void Camera::follow(glm::vec2 pos, float w, float h, float speed, float min, float max)
+    {
+        pos.x -= w / 2.0f;
+        pos.y -= h / 2.0f;
+
+        glm::vec2 delta = pos - positionTopLeftCorner;
+
+        float len = glm::length(delta);
+
+        if (len == 0)
+        {
+            return;
+        }
+
+        delta = glm::normalize(delta);
+
+        if (len > min)
+        {
+            if (speed >= len)
+            {
+                positionTopLeftCorner = pos;
+            }
+            else if (len > max)
+            {
+                positionTopLeftCorner = pos - (max * delta);
+            }
+            else
+            {
+                positionTopLeftCorner += delta * speed;
+            }
+        }
+    }
+
+    glm::vec2 Camera::worldToScreen(glm::vec2 worldPos, float w, float h)
+    {
+        glm::vec4 screenPos = getMatrix(w, h) * glm::vec4(worldPos, 0.0f, 1.0f);
+        return { screenPos.x, screenPos.y };
+    }
+
+    glm::vec2 Camera::screenToWorld(glm::vec2 screenPos, float w, float h)
+    {
+        glm::vec4 worldPos = glm::inverse(getMatrix(w, h)) * glm::vec4(screenPos, 0.0f, 1.0f);
+        return { worldPos.x, worldPos.y };
+    }
+
     //////////////
     // RENDERER //
     //////////////
