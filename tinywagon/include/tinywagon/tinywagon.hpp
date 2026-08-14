@@ -214,6 +214,24 @@ namespace tw
         void flush(bool dontBindAnyFBO = false, bool dontClearDrawData = false, bool dontEnableGLFeatures = false);
     };
 
+    // helper function to return a specific texture within a texture atlas in the form of normalized coordinates.
+    glm::vec4 computeTextureAtlas(int xCount, int yCount, int x, int y, bool flipHorizontal = false);
+
+    // used to get texture coordinates for a teture atlas
+    struct TextureAtlas
+    {
+        TextureAtlas() { };
+        TextureAtlas(int xCount, int yCount):xCount(xCount), yCount(yCount) { };
+
+        int xCount = 0;
+        int yCount = 0;
+
+        glm::vec4 get(int x, int y, bool flipHorizontal = false)
+        {
+            return computeTextureAtlas(xCount, yCount, x, y, flipHorizontal);
+        }
+    };
+
     // A few default color constants for easy access :)
     #define RED glm::vec4(1, 0, 0, 1)
     #define GREEN glm::vec4(0, 1, 0, 1)

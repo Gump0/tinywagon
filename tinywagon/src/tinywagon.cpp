@@ -729,4 +729,24 @@ namespace tw
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
     }
+    
+    //////////////////////////
+    // TEXTURE ATLAS HELPER // 
+    //////////////////////////
+
+    glm::vec4 computeTextureAtlas(int xCount, int yCount, int x, int y, bool flipHorizontal)
+    {
+        // calculate size of each texture in atlas
+        float xSize = 1.0f / xCount;
+        float ySize = 1.0f / yCount;
+
+        if (flipHorizontal)
+        {
+            return { (x + 1) * xSize, 1 - (y + 1) * ySize, x * xSize, 1 - y * ySize };
+        }   
+        else
+        {
+            return { x * xSize, 1 - (y + 1) * ySize, (x + 1) * xSize, 1 - y * ySize };
+        }
+    }
 };

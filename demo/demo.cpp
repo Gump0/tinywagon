@@ -80,12 +80,17 @@ int main(void)
 	tw::Renderer2D renderer;
 	renderer.create();
 
+
 	tw::Shader shader;
 	shader.createDefaultShader();
 
-	tw::Texture texture(RESOURCES_PATH "grass.png");
-	texture.bind();
+	tw::Texture texture1(RESOURCES_PATH "grass.png");
+	tw::Texture texture2(RESOURCES_PATH "structuredArt.png");
+	tw::TextureAtlas textureAtlas(3, 2);
+	texture1.bind();
+
 	std::cout << "loading texture from: " << RESOURCES_PATH << "grass.png" << std::endl;
+	std::cout << "loading texture from: " << RESOURCES_PATH << "strucuredArt.png" << std::endl;
 
 	float lastFrameTime = (float)glfwGetTime();
 
@@ -129,7 +134,10 @@ int main(void)
 		renderer.renderTriangleFromNormalizedPositions(
 			{-0.1, -0.1, 0, 1}, {0.1, -0.1, 0, 1}, {0.0, 0.5, 0, 1}, { }, {0, 0, 1, 1}, PURPLE);
 
-		renderer.renderRect({ 50, 50, 100, 100}, texture, {1, 1, 1, 1}, {0, 0, 1, 1}, 0);
+		renderer.renderRect({ 50, 50, 100, 100}, texture1, {1, 1, 1, 1}, {0, 0, 1, 1}, 0);
+
+		renderer.renderRect({200, 200, 100, 100}, texture2, {1, 1, 1, 1}, textureAtlas.get(0, 0));
+		renderer.renderRect({200, 300, 100, 100}, texture2, {1, 1, 1, 1}, textureAtlas.get(1, 1, true));
 
 		renderer.flush();
 
