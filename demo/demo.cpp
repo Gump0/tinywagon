@@ -29,7 +29,7 @@ int main(void)
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 #endif
 
-	GLFWwindow *window = glfwCreateWindow(640, 480, "Pixy example", NULL, NULL);
+	GLFWwindow *window = glfwCreateWindow(640, 480, "tinywagon example", NULL, NULL);
 	if (!window)
 	{
 		glfwTerminate();
@@ -74,7 +74,7 @@ int main(void)
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 	glEnableVertexAttribArray(2);
-	// ------------------------------------------
+	// -----------------------------------------
 	tw::init();
 
 	tw::Renderer2D renderer;

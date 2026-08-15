@@ -602,15 +602,15 @@ namespace tw
 
         glm::vec2 uvTopLeft = { textureCoords.x, textureCoords.w };
         glm::vec2 uvTopRight = { textureCoords.z, textureCoords.w };
-        glm::vec2 uvBottomRight = { textureCoords.x, textureCoords.y };
-        glm::vec2 uvBottomLeft = { textureCoords.z, textureCoords.y };
+        glm::vec2  uvBottomLeft = { textureCoords.x, textureCoords.y };
+        glm::vec2 uvBottomRight = { textureCoords.z, textureCoords.y };
 
         glm::vec4 colorsVector[3] = { colors, colors, colors };
         glm::vec2 firstTriangleTextureCoords[3] = { uvTopLeft, uvTopRight, uvBottomRight };
         glm::vec2 secondTriangleTextureCoords[3] = { uvTopLeft, uvBottomRight, uvBottomLeft };
 
         renderTriangleFromNormalizedPositions(topLeft, topRight, bottomRight, texture, firstTriangleTextureCoords, colorsVector);
-        renderTriangleFromNormalizedPositions(topLeft, bottomRight, bottomLeft, texture, firstTriangleTextureCoords, colorsVector);
+        renderTriangleFromNormalizedPositions(topLeft, bottomRight, bottomLeft, texture, secondTriangleTextureCoords, colorsVector);
     }
 
     void Renderer2D::clearDrawData()
@@ -713,7 +713,7 @@ namespace tw
                     }
                 }
 
-                glDrawArrays(GL_TRIANGLES, 0, 3 * renderTriangleData.size());
+                glDrawArrays(GL_TRIANGLES, pos * 3, 3 * (size - pos));
             }
 
             glBindVertexArray(0);
