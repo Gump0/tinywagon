@@ -67,7 +67,7 @@ namespace tw
         };
 
         // simple method to return the size of a texture buffer as a vector2 (x,y)
-        glm::ivec2 GetSize();
+        glm::ivec2 getSize();
 
         // this function expects a buffer of bytes in GL_RGBA format
         void createFromBuffer(const char* image_data, const int width, const int height,
@@ -83,8 +83,22 @@ namespace tw
         
         // load texture from file
         void loadFromFile(const char* fileName, bool pixelated = true, bool useMipMap = false);
+        
+        // Used for Texture Atlas
+        // this will add pixel padding between each sprite within the Texture Atlas to avoid common visual bugs with OpenGL
+        // int xCount, int yCount are how many elements are in each texture atlas.
+        // to be used with texture atlas padding to get the texture coordinates
+        void createFromFileDataWithPixelPadding(const unsigned char* image_file_data, const size_t image_file_size,
+            int xCount, int yCount, bool pixelated = true, bool useMipMaps = false);
+        
+        // Used for Texture Atlas
+        // this will add pixel padding between each sprite within the Texture Atlas to avoid common visual bugs with OpenGL
+        // int xCount, int yCount are how many elements are in each texture atlas.
+        // to be used with texture atlas padding to get the texture coordinates
+        void loadFromFileWithPixelPadding(const char* fileName, int xCount, int yCount,
+            bool pixelated = true, bool useMipMaps = false);
 
-        // returns the size of the texture stored in memory in bytes
+        // returns the size of the texture stored in memory (in bytes)
         // used when allocating your buffer when using readTextureData
         // optionally you can also return the width and height with the outsize parameter.
         size_t getMemorySize(int mipLevel = 0, glm::ivec2* outsize = 0);
@@ -229,6 +243,36 @@ namespace tw
         glm::vec4 get(int x, int y, bool flipHorizontal = false)
         {
             return computeTextureAtlas(xCount, yCount, x, y, flipHorizontal);
+        }
+    };
+
+	// int mapXsize, int mapYsize, is the size of the texture after it was loaded with padding
+	// xCount and yCount are the number of elements of the atlas
+    glm::vec4 computeTextureAtlasWithPadding(int mapXSize, int mapYSize, int xCount, int yCount,
+        int x, int y, bool flipHorizontal = false);
+
+    // used to get the texture coordinates for the texture atlas
+    // Textue Atlas is typically created using loadFromFileWithPixelPadding or createFromFileDataWithPixelPadding
+    // QUICK DISCLAIMER : only choose TextureAtlasPadding > TextureAtlas if you are planning on having full textures
+    // standing aside one-another (think of terraria blocks placed side by-side eachother)
+    // because otherwise this could cause wierd borders being created around transparent textures and cause
+    // unessisary CPU calculations.
+    struct TextureAtlasPadding
+    {
+        TextureAtlasPadding() { };
+
+        // count size of the full texture (in pixels)
+        TextureAtlasPadding(int x, int y, int xSize, int ySize):xCount(x), yCount(y),
+            xSize(xSize), ySize(ySize) { };
+
+        int xCount = 0;
+        int yCount = 0;
+        int xSize = 0;
+        int ySize = 0;
+
+        glm::vec4 get(int x, int y, bool flip = false)
+        {
+            return computeTextureAtlasWithPadding(xSize, ySize, xCount, yCount, x, y , flip);
         }
     };
 

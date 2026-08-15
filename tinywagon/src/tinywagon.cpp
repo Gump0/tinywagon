@@ -233,7 +233,7 @@ namespace tw
     // TEXTURE //
     /////////////
 
-    glm::ivec2 Texture::GetSize()
+    glm::ivec2 Texture::getSize()
     {
         if (id == 0)
             return{};
@@ -356,6 +356,183 @@ namespace tw
         file.close();
 
         createFromFileData(fileData, fileSize, pixelated, useMipMap);
+
+        delete[] fileData;
+    }
+
+	void Texture::createFromFileDataWithPixelPadding(const unsigned char *image_file_data,
+		const size_t image_file_size, int xCount, int yCount, bool pixelated, bool useMipMaps)
+	{
+
+		stbi_set_flip_vertically_on_load(true);
+
+		int width = 0;
+		int height = 0;
+		int channels = 0;
+
+		const unsigned char *decodedImage = stbi_load_from_memory(image_file_data, (int)image_file_size, &width, &height, &channels, 4);
+
+		if (!decodedImage) { return; }
+
+		// how big is one element in the atlas in pixels
+		int blockSizeX = width / xCount;
+		int blockSizeY = height / yCount;
+
+		// the new dimensions start from last dimension + 2 pixel for each block there is
+		int newW = width + xCount * 2;
+		int newH = height + yCount * 2;
+
+		unsigned char *newData = new unsigned char[newW * newH * 4] {};
+
+
+		auto getOld = [decodedImage, width](int x, int y, int c)->const unsigned char
+		{
+			return decodedImage[4 * (x + (y * width)) + c];
+		};
+
+		auto getNew = [newData, newW](int x, int y, int c)
+		{
+			return &newData[4 * (x + (y * newW)) + c];
+		};
+
+		int newDataCursor = 0;
+		int dataCursor = 0;
+
+		// first copy data
+		for (int y = 0; y < newH; y++)
+		{
+			// we set this to true for collums that are padding zones
+			int yNo = 0;
+			if ((y == 0 || y == newH - 1
+				|| ((y) % (blockSizeY + 2)) == 0 ||
+				((y + 1) % (blockSizeY + 2)) == 0
+				))
+			{
+				yNo = 1;
+			}
+
+			for (int x = 0; x < newW; x++)
+			{
+				if (
+					yNo ||
+
+					((
+					x == 0 || x == newW - 1
+					|| (x % (blockSizeX + 2)) == 0 ||
+					((x + 1) % (blockSizeX + 2)) == 0
+					)
+					)
+
+					)
+				{
+					// this is a padding zone, for now we set it to 0
+					newData[newDataCursor++] = 0;
+					newData[newDataCursor++] = 0;
+					newData[newDataCursor++] = 0;
+					newData[newDataCursor++] = 0;
+				}
+				else
+				{
+					newData[newDataCursor++] = decodedImage[dataCursor++];
+					newData[newDataCursor++] = decodedImage[dataCursor++];
+					newData[newDataCursor++] = decodedImage[dataCursor++];
+					newData[newDataCursor++] = decodedImage[dataCursor++];
+				}
+
+			}
+
+		}
+
+		// then add margins
+		for (int x = 1; x < newW - 1; x++)
+		{
+			// copy on left
+			if (x == 1 ||
+				(x % (blockSizeX + 2)) == 1
+				)
+			{
+				for (int y = 0; y < newH; y++)
+				{
+					*getNew(x - 1, y, 0) = *getNew(x, y, 0);
+					*getNew(x - 1, y, 1) = *getNew(x, y, 1);
+					*getNew(x - 1, y, 2) = *getNew(x, y, 2);
+					*getNew(x - 1, y, 3) = *getNew(x, y, 3);
+				}
+
+			}
+			else // copy on right
+				if (x == newW - 2 ||
+					(x % (blockSizeX + 2)) == blockSizeX
+					)
+				{
+					for (int y = 0; y < newH; y++)
+					{
+						*getNew(x + 1, y, 0) = *getNew(x, y, 0);
+						*getNew(x + 1, y, 1) = *getNew(x, y, 1);
+						*getNew(x + 1, y, 2) = *getNew(x, y, 2);
+						*getNew(x + 1, y, 3) = *getNew(x, y, 3);
+					}
+				}
+		}
+
+		for (int y = 1; y < newH - 1; y++)
+		{
+			if (y == 1 ||
+				(y % (blockSizeY + 2)) == 1
+				)
+			{
+				for (int x = 0; x < newW; x++)
+				{
+					*getNew(x, y - 1, 0) = *getNew(x, y, 0);
+					*getNew(x, y - 1, 1) = *getNew(x, y, 1);
+					*getNew(x, y - 1, 2) = *getNew(x, y, 2);
+					*getNew(x, y - 1, 3) = *getNew(x, y, 3);
+				}
+			}
+			else
+				if (y == newH - 2 ||
+					(y % (blockSizeY + 2)) == blockSizeY
+					)
+				{
+					for (int x = 0; x < newW; x++)
+					{
+						*getNew(x, y + 1, 0) = *getNew(x, y, 0);
+						*getNew(x, y + 1, 1) = *getNew(x, y, 1);
+						*getNew(x, y + 1, 2) = *getNew(x, y, 2);
+						*getNew(x, y + 1, 3) = *getNew(x, y, 3);
+					}
+				}
+
+		}
+
+		createFromBuffer((const char *)newData, newW, newH, pixelated, useMipMaps);
+
+		STBI_FREE(decodedImage);
+		delete[] newData;
+	}
+
+    void Texture::loadFromFileWithPixelPadding(const char* fileName, int xCount, int yCount,
+        bool pixelated, bool useMipMaps)
+    {
+        std::ifstream file(fileName, std::ios::binary);
+
+        if (!file.is_open())
+        {
+            std::string s = "error opening: ";
+            s += fileName;
+            reportError(s.c_str());
+            return;
+        }
+
+        int fileSize = 0;
+        file.seekg(0, std::ios::end);
+        fileSize = (int)file.tellg();
+        file.seekg(0, std::ios::beg);
+        unsigned char* fileData = new unsigned char[fileSize];
+        file.read((char*) fileData, fileSize);
+        file.close();
+
+        createFromFileDataWithPixelPadding(fileData, fileSize, xCount, yCount, pixelated, useMipMaps);
 
         delete[] fileData;
     }
@@ -747,6 +924,29 @@ namespace tw
         else
         {
             return { x * xSize, 1 - (y + 1) * ySize, (x + 1) * xSize, 1 - y * ySize };
+        }
+    }
+
+    glm::vec4 computeTextureAtlasWithPadding(int mapXSize, int mapYSize, int xCount, int yCount,
+        int x, int y, bool flipHorizontal)
+    {
+        float xSize = 1.0f / xCount;
+        float ySize = 1.0f / yCount;
+
+        float xPadding = 1.0f / mapXSize;
+        float yPadding = 1.0f / mapYSize;
+
+        glm::vec4 noFlip = {x * xSize + xPadding, 1.0f - ((y + 1) * ySize) + yPadding,
+            (x + 1) * xSize - xPadding, 1 - (y * ySize) - yPadding};
+
+        if (flipHorizontal)
+        {
+            glm::vec4 flip = {noFlip.z, noFlip.y, noFlip.x, noFlip.w};
+            return flip;
+        }
+        else
+        {
+            return noFlip;
         }
     }
 };

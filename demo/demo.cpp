@@ -85,9 +85,11 @@ int main(void)
 	shader.createDefaultShader();
 
 	tw::Texture texture1(RESOURCES_PATH "grass.png");
-	tw::Texture texture2(RESOURCES_PATH "structuredArt.png");
-	tw::TextureAtlas textureAtlas(3, 2);
 	texture1.bind();
+
+	tw::Texture texture2;
+	texture2.loadFromFileWithPixelPadding(RESOURCES_PATH "structuredArt.png", 3, 2);
+	tw::TextureAtlasPadding textureAtlas(3, 2, texture2.getSize().x, texture2.getSize().y);
 
 	std::cout << "loading texture from: " << RESOURCES_PATH << "grass.png" << std::endl;
 	std::cout << "loading texture from: " << RESOURCES_PATH << "strucuredArt.png" << std::endl;
@@ -136,8 +138,8 @@ int main(void)
 
 		renderer.renderRect({ 50, 50, 100, 100}, texture1, {1, 1, 1, 1}, {0, 0, 1, 1}, 0);
 
-		renderer.renderRect({200, 200, 100, 100}, texture2, {1, 1, 1, 1}, textureAtlas.get(0, 0));
-		renderer.renderRect({200, 300, 100, 100}, texture2, {1, 1, 1, 1}, textureAtlas.get(1, 1, true));
+		renderer.renderRect({200,200, 100, 100}, texture2, {1,1,1,1}, textureAtlas.get(0, 0));
+		renderer.renderRect({300,200, 100, 100}, texture2, {1,1,1,1}, textureAtlas.get(1, 1, true));
 
 		renderer.flush();
 
