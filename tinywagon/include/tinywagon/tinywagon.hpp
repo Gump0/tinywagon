@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <vector>
+#include <stb_truetype/stb_truetype.h>
 
 namespace tw
 {
@@ -116,6 +117,35 @@ namespace tw
         
         void bind(unsigned int sample = 0);
         void unbind();
+
+        void cleanup();
+    };
+
+    // used for drawing text
+    struct Font
+    {
+        Texture texture { };
+        glm::ivec2 textureSize =  { };
+        stbtt_packedchar* packedCharsBuffer = 0;
+        int packedCharBuffersSize = 0;
+        float lineHeight = 0.0f;
+        float spaceWidth = 0.0f;
+        float maxLetterWidth = 0.0f;
+        bool monospaced = false;
+
+        Font() { };
+        Font(const char* file, bool monospaced = false)
+        {
+            createFromFile(file, monospaced);
+        }
+
+        bool createFromTTF(const unsigned char* ttfData, const size_t ttfDataSize, bool monospaced = false);
+        void createFromFile(const char* filename, bool monospaced = false);
+
+        bool loaded()
+        {
+            return texture.id != 0;
+        }
 
         void cleanup();
     };

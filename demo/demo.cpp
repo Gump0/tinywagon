@@ -91,6 +91,8 @@ int main(void)
 	texture2.loadFromFileWithPixelPadding(RESOURCES_PATH "structuredArt.png", 3, 2);
 	tw::TextureAtlasPadding textureAtlas(3, 2, texture2.getSize().x, texture2.getSize().y);
 
+	tw::Font font(RESOURCES_PATH "font.ttf");
+
 	std::cout << "loading texture from: " << RESOURCES_PATH << "grass.png" << std::endl;
 	std::cout << "loading texture from: " << RESOURCES_PATH << "strucuredArt.png" << std::endl;
 
@@ -130,16 +132,23 @@ int main(void)
 
 		renderer.camera.follow(playerPos, width, height, 100, 0, 100);
 
+		// render triangles with normalized coordinates.
 		renderer.renderTriangleFromNormalizedPositions(
-			{-0.5, -0.5, 0, 1}, {0.5, -0.5, 0, 1}, {0.0, 0.5, 0, 1}, { }, {0, 0, 1, 1}, {1, 1, 1, 1});
+			{-0.5, -0.5, 0, 1}, {0.5, -0.5, 0, 1}, {0.0, 0.5, 0, 1}, { }, {0, 0, 1, 1}, WHITE);
 
 		renderer.renderTriangleFromNormalizedPositions(
 			{-0.1, -0.1, 0, 1}, {0.1, -0.1, 0, 1}, {0.0, 0.5, 0, 1}, { }, {0, 0, 1, 1}, PURPLE);
-
+		
+		// render single square texture example.
 		renderer.renderRect({ 50, 50, 100, 100}, texture1, {1, 1, 1, 1}, {0, 0, 1, 1}, 0);
 
+		// render textures from texture atlas example
 		renderer.renderRect({200,200, 100, 100}, texture2, {1,1,1,1}, textureAtlas.get(0, 0));
 		renderer.renderRect({300,200, 100, 100}, texture2, {1,1,1,1}, textureAtlas.get(1, 1, true));
+
+		// render entire font texture
+		renderer.renderRect({400, 400, 1000, 1000} , { }, {0.3, 0.1, 0.1, 1});
+		renderer.renderRect({400, 400, 1000, 1000}, font.texture, RED, {0, 1, 1, 0});
 
 		renderer.flush();
 

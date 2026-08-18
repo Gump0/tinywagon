@@ -602,6 +602,146 @@ namespace tw
         *this = {};
     }
 
+    //////////
+    // FONT //
+    //////////
+
+    bool Font::createFromTTF(const unsigned char* ttfData, const size_t ttfDataSize, bool monospaced)
+    {
+        *this = { };
+
+        if (!ttfData || ttfDataSize == 0)
+        {
+            reportError("Invalid TTF data");
+            return false;
+        }
+
+        this->monospaced = monospaced;
+
+        textureSize.x = 2048;
+        textureSize.y = 2048;
+        packedCharBuffersSize = ('~' - ' ' + 1);
+
+        // initialize stbtt_fontinfo to get font metrics.
+        stbtt_fontinfo fontInfo;
+        int fontOffset = stbtt_GetFontOffsetForIndex(ttfData, 0);
+        if (fontOffset < 0 || !stbtt_InitFont(&fontInfo, ttfData, fontOffset))
+        {
+            reportError("Failed to initialize TTF font");
+            return false;
+        }
+
+        int ascent = 0, descent = 0, lineGap = 0;
+        stbtt_GetFontVMetrics(&fontInfo, &ascent, &descent, &lineGap);
+
+        const int FONT_PIXEL_SCALE = 64;
+
+        float scale = stbtt_ScaleForPixelHeight(&fontInfo, FONT_PIXEL_SCALE);
+        lineHeight = (ascent - descent + lineGap) * scale;
+
+        // STB TrueType will give us a one channel buffer of the font,
+        // so we need to convert it to RGBA for OpenGL
+        const size_t fontMonochromeBufferSize = textureSize.x * textureSize.y;
+        const size_t fontRgbaBufferSize = textureSize.x * textureSize.y * 4;
+
+        unsigned char* fontMonochromeBuffer = new unsigned char[fontMonochromeBufferSize] { };
+        unsigned char* fontRgbaBuffer = new unsigned char[fontRgbaBufferSize] { };
+
+        packedCharsBuffer = new stbtt_packedchar[packedCharBuffersSize] { };
+
+        auto cleanupFontCreation = [&]()
+        {
+            delete[] fontMonochromeBuffer;
+            delete[] fontRgbaBuffer;
+            delete[] packedCharsBuffer;
+        };
+
+        stbtt_pack_context stbtt_context;
+        if (!stbtt_PackBegin(&stbtt_context, fontMonochromeBuffer, textureSize.x, textureSize.y, 0, 2, nullptr))
+        {
+            reportError("Failed to call stbtt_PackBegin");
+            cleanupFontCreation();
+            *this = { };
+            return false;
+        }
+
+        stbtt_PackSetOversampling(&stbtt_context, 2, 2);
+        if (!stbtt_PackFontRange(&stbtt_context, ttfData, 0, FONT_PIXEL_SCALE, ' ', packedCharBuffersSize, packedCharsBuffer))
+        {
+            stbtt_PackEnd(&stbtt_context);
+            reportError("Failed to call stbtt_PackFontRange");
+            cleanupFontCreation();
+            *this = { };
+            return false;
+        }
+
+        stbtt_PackEnd(&stbtt_context);
+
+        // convert monochrome to RGBA as noted above.
+        for (int i = 0; i < fontMonochromeBufferSize; i++)
+        {
+            fontRgbaBuffer[( i * 4)] = 255;
+            fontRgbaBuffer[( i * 4) + 1] = 255;
+            fontRgbaBuffer[( i * 4 + 2)] = 255;
+            fontRgbaBuffer[( i * 4) + 3] = fontMonochromeBuffer[i];
+        }
+
+        // initialize texture.
+        glGenTextures(1, &texture.id);
+        glBindTexture(GL_TEXTURE_2D, texture.id);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, textureSize.x, textureSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, fontRgbaBuffer);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+        maxLetterWidth = 0.0f;
+        for (int i = 0; i < packedCharBuffersSize; i++)
+        {
+            if (packedCharsBuffer[i].xadvance > maxLetterWidth)
+            {
+                maxLetterWidth = packedCharsBuffer[i].xadvance;
+            }
+        }
+
+        spaceWidth = packedCharsBuffer[' ' - ' '].xadvance;
+
+        delete[] fontMonochromeBuffer;
+        delete[] fontRgbaBuffer;
+
+        return true;
+    }
+
+    void Font::createFromFile(const char* fileName, bool monospaced)
+    {
+        std::ifstream fileFont(fileName, std::ios::binary);
+
+        if (!fileFont.is_open())
+        {
+            std::string s = "error opening: ";
+            s += fileName;
+            reportError(s.c_str());
+            return;
+        }
+
+        int fileSize = 0;
+        fileFont.seekg(0, std::ios::end);
+        fileSize = (int)fileFont.tellg();
+        fileFont.seekg(0, std::ios::beg);
+        unsigned char* fileData = new unsigned char[fileSize];
+        fileFont.read((char*)fileData, fileSize);
+        fileFont.close();
+    
+        if (!createFromTTF(fileData, fileSize, monospaced))
+        {
+            std::string s = "error creating the TTF from: ";
+            s += fileName;
+            reportError(s.c_str());
+        }
+
+        delete[] fileData;
+    }
+
     ////////////
     // CAMERA // 
     ////////////
