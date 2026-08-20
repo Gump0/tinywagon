@@ -5,6 +5,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <vector>
 #include <stb_truetype/stb_truetype.h>
+#include <algorithm>
 
 namespace tw
 {
@@ -150,6 +151,27 @@ namespace tw
         void cleanup();
     };
 
+	struct TextGlyphLayout
+	{
+		glm::vec4 rectangle = {};
+		glm::vec4 textureCoords = {};
+	};
+
+    struct TextLayout
+    {
+        glm::vec2 min = { };
+        glm::vec2 max = { };
+        std::vector<TextGlyphLayout> letters;
+    
+        glm::vec2 getSize()
+        {
+            return max - min;
+        }
+    };
+
+    TextLayout computeTextLayout(const char* text, Font font, float sizePixels,
+        float spacing, float lineHeightSpacing, bool writeLetters);
+
     // handles all logic related to the camera system
     struct Camera
     { 
@@ -251,12 +273,21 @@ namespace tw
         void renderRect(const glm::vec4 &position, Texture texture = {}, glm::vec4 colors = {1,1,1,1},
             glm::vec4 textureCoords = {0,0,1,1}, float rotationRadians = 0.0f, glm::vec2 pivot = {0, 0});
 
+        // if showInCenter is 0, the origin will be at the bottom left corner since it represnets the line in which
+        // the text will be drawn at.
+        TextLayout renderText(glm::vec2 position, const char* text, Font font, 
+            float sizePixels = 64.0f, bool showInCenter = true, glm::vec4 color = {1,1,1,1},
+            const float spacing = 1, const float lineHeightSpacing = 1, glm::vec4 shadowColor = {0.1,0.1,0.1,1});
+
         // not to be confused with cleanup, this clears the renderer of draw data to reset the frame
         void clearDrawData();
 
         // used to to draw frame to screen.
         void flush(bool dontBindAnyFBO = false, bool dontClearDrawData = false, bool dontEnableGLFeatures = false);
     };
+
+    glm::vec2 getTextSize(const char* text, Font font, const float sizePixels = 64.0f,
+        const float spacing = 1.0f, const float line_space = 1);
 
     // helper function to return a specific texture within a texture atlas in the form of normalized coordinates.
     glm::vec4 computeTextureAtlas(int xCount, int yCount, int x, int y, bool flipHorizontal = false);

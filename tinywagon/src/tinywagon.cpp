@@ -741,6 +741,137 @@ namespace tw
 
         delete[] fileData;
     }
+    
+    // for this character, where is it's rectangle in the front atlas? and how big should it be on screen?
+    stbtt_aligned_quad fontGetGlyphQuad(Font font, const char c)
+    {
+        stbtt_aligned_quad quad = { 0 };
+        float x = 0;
+        float y = 0;
+
+        stbtt_GetPackedQuad(font.packedCharsBuffer, font.textureSize.x, font.textureSize.y,
+            c - ' ', &x, &y, &quad, 1);
+        
+        return quad;
+    }
+
+	TextLayout computeTextLayout(const char *text, Font font, float sizePixels, 
+        float spacing, float lineHeightSpacing, bool writeLetters)
+	{
+
+		TextLayout layout;
+		float size = sizePixels / 64.f;
+		float penX = 0.0f;
+		float lineY = 0.0f;
+		float advanceSpaceSize = font.monospaced ? font.maxLetterWidth : font.spaceWidth;
+		float scaledSpaceSize = advanceSpaceSize * size;
+		float letterSpacing = (spacing - 1.0f) * scaledSpaceSize;
+
+		if (!text || text[0] == 0)
+		{
+			return layout;
+		}
+
+		int text_length = (int)strlen(text);
+		if (writeLetters)
+		{
+			layout.letters.reserve(text_length);
+		}
+
+		bool firstTimeWroteLetter = 1;
+		auto writeLetter = [&](const TextGlyphLayout &glyph)
+		{
+			if (writeLetters)
+			{
+				layout.letters.push_back(glyph);
+			}
+
+			//calculate min max metrics
+			if (firstTimeWroteLetter)
+			{
+				layout.min.x = glyph.rectangle.x;
+				layout.min.y = glyph.rectangle.y;
+
+				layout.max.x = glyph.rectangle.x + glyph.rectangle.z;
+				layout.max.y = glyph.rectangle.y + glyph.rectangle.w;
+
+				firstTimeWroteLetter = 0;
+			}
+			else
+			{
+				layout.min.x = std::min(layout.min.x, glyph.rectangle.x);
+				layout.min.y = std::min(layout.min.y, glyph.rectangle.y);
+
+				layout.max.x = std::max(layout.max.x, glyph.rectangle.x + glyph.rectangle.z);
+				layout.max.y = std::max(layout.max.y, glyph.rectangle.y + glyph.rectangle.w);
+			}
+
+		};
+
+		for (int i = 0; i < text_length; i++)
+		{
+			if (text[i] == '\n')
+			{
+				TextGlyphLayout glyph;
+				glyph.rectangle = {penX, lineY, 0, 0};
+				glyph.textureCoords = {};
+				writeLetter(glyph);
+
+				penX = 0.0f;
+				lineY += (font.lineHeight) * size * lineHeightSpacing;
+			}
+			else if (text[i] == '\t')
+			{
+				float tabSize = (scaledSpaceSize + letterSpacing) * 3;
+
+				TextGlyphLayout glyph;
+				glyph.rectangle = {penX, lineY, tabSize, 0};
+				glyph.textureCoords = {};
+				writeLetter(glyph);
+
+				penX += tabSize;
+			}
+			else if (text[i] == ' ')
+			{
+				TextGlyphLayout glyph;
+				glyph.rectangle = {penX, lineY, scaledSpaceSize, 0};
+				glyph.textureCoords = {};
+				writeLetter(glyph);
+
+				penX += scaledSpaceSize + letterSpacing;
+			}
+			else if (text[i] >= ' ' && text[i] <= '~')
+			{
+				stbtt_aligned_quad quad = fontGetGlyphQuad(font, text[i]);
+				float xAdvance = font.monospaced ? font.maxLetterWidth : font.packedCharsBuffer[text[i] - ' '].xadvance;
+
+				TextGlyphLayout glyph = {};
+				glyph.rectangle.x = penX + quad.x0 * size;
+				glyph.rectangle.y = lineY + quad.y0 * size;
+				glyph.rectangle.z = (quad.x1 - quad.x0) * size;
+				glyph.rectangle.w = (quad.y1 - quad.y0) * size;
+				glyph.textureCoords = {quad.s0, quad.t1, quad.s1, quad.t0};
+
+				writeLetter(glyph);
+
+				penX += xAdvance * size + letterSpacing;
+			}
+			else
+			{
+				TextGlyphLayout glyph;
+				glyph.rectangle = {penX, lineY, 0.0f, 0.0f};
+				writeLetter(glyph);
+			}
+		}
+
+		return layout;
+	}
+
+    glm::vec2 getTextSize(const char* text, Font font, const float sizePixels,
+        const float spacing, const float line_space)
+    {
+        return computeTextLayout(text, font, sizePixels, spacing, line_space, false).getSize();
+    }
 
     ////////////
     // CAMERA // 
@@ -1045,6 +1176,56 @@ namespace tw
         {
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
+    }
+
+    TextLayout Renderer2D::renderText(glm::vec2 position, const char *text, Font font,
+        float sizePixels, bool showInCenter, glm::vec4 color, const float spacing,
+        const float lineHeightSpacing, glm::vec4 ShadowColor)
+    {
+
+        TextLayout textLayout = computeTextLayout(text, font, sizePixels, spacing, lineHeightSpacing, true);
+
+        float size = sizePixels / 64.f;
+        glm::vec2 drawOffset = position;
+
+        if (showInCenter)
+        {
+            glm::vec2 textSize = textLayout.getSize();
+            drawOffset.x -= textSize.x / 2.0f;
+            drawOffset.y -= (textLayout.min.y + textLayout.max.y) / 2.0f;
+        }
+
+        textLayout.min += drawOffset;
+        textLayout.max += drawOffset;
+
+        for (TextGlyphLayout &glyph : textLayout.letters)
+        {
+            glyph.rectangle.x += drawOffset.x;
+            glyph.rectangle.y += drawOffset.y;
+
+            //display debug letter rect
+            //renderRect(glyph.rectangle, {}, {0.9,0.9,0.2,0.5});
+
+            if (glyph.rectangle.z <= 0 || glyph.rectangle.w <= 0 ||
+                (glyph.textureCoords.x == 0 && glyph.textureCoords.y == 0 &&
+                glyph.textureCoords.z == 0 && glyph.textureCoords.w == 0))
+            {
+                continue;
+            }
+
+            if (ShadowColor.w > 0)
+            {
+                glm::vec2 pos = {-5, 3};
+                pos *= size;
+                renderRect({glyph.rectangle.x + pos.x, glyph.rectangle.y + pos.y,  glyph.rectangle.z, glyph.rectangle.w},
+                    font.texture, ShadowColor, glyph.textureCoords);
+
+            }
+
+            renderRect(glyph.rectangle, font.texture, color, glyph.textureCoords);
+        }
+
+        return textLayout;
     }
     
     //////////////////////////

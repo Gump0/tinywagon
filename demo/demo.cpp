@@ -150,6 +150,23 @@ int main(void)
 		renderer.renderRect({400, 400, 1000, 1000} , { }, {0.3, 0.1, 0.1, 1});
 		renderer.renderRect({400, 400, 1000, 1000}, font.texture, RED, {0, 1, 1, 0});
 
+		// render silly text boxes
+		// auto letters = tw::computeTextLayout("Test\nTest2\nTes t3", font, 64, 1, 1, true);
+
+		// for (auto &l : letters.letters)
+		// {
+		// 	renderer.renderRect(l.rectangle, font.texture, {1,1,1,1}, l.textureCoords);
+		// }
+
+		// more 'official way' to render text.
+		auto testText = renderer.renderText({0,0}, "Foo\nBar\nTes t 24", font, 64, 1, {1,1,1,1}, 1, 1);
+
+		// render text cetner point for display purpose
+		renderer.renderRect({-2,-2,4,4}, {}, {1,0,0,1});
+
+		// render text dimensions as a small box.
+		renderer.renderRect({testText.min, testText.getSize()}, {}, {0, 1, 1, 0.2});
+
 		renderer.flush();
 
 		glfwSwapBuffers(window);
