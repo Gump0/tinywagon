@@ -91,7 +91,9 @@ int main(void)
 	texture2.loadFromFileWithPixelPadding(RESOURCES_PATH "structuredArt.png", 3, 2);
 	tw::TextureAtlasPadding textureAtlas(3, 2, texture2.getSize().x, texture2.getSize().y);
 
-	tw::Font font(RESOURCES_PATH "font.ttf");
+	// Example of loading font.
+	// but for this example we use the default font
+	// tw::Font font(RESOURCES_PATH "font.ttf");
 
 	std::cout << "loading texture from: " << RESOURCES_PATH << "grass.png" << std::endl;
 	std::cout << "loading texture from: " << RESOURCES_PATH << "strucuredArt.png" << std::endl;
@@ -147,8 +149,8 @@ int main(void)
 		renderer.renderRect({300,200, 100, 100}, texture2, {1,1,1,1}, textureAtlas.get(1, 1, true));
 
 		// render entire font texture
-		renderer.renderRect({400, 400, 1000, 1000} , { }, {0.3, 0.1, 0.1, 1});
-		renderer.renderRect({400, 400, 1000, 1000}, font.texture, RED, {0, 1, 1, 0});
+		// renderer.renderRect({400, 400, 1000, 1000} , { }, {0.3, 0.1, 0.1, 1});
+		// renderer.renderRect({400, 400, 1000, 1000}, font.texture, RED, {0, 1, 1, 0});
 
 		// render silly text boxes
 		// auto letters = tw::computeTextLayout("Test\nTest2\nTes t3", font, 64, 1, 1, true);
@@ -159,7 +161,7 @@ int main(void)
 		// }
 
 		// more 'official way' to render text.
-		auto testText = renderer.renderText({0,0}, "Foo\nBar\nTes t 24", font, 64, 1, {1,1,1,1}, 1, 1);
+		auto testText = renderer.renderText({0,0}, "Foo\nBar\nTes t 24");
 
 		// render text cetner point for display purpose
 		renderer.renderRect({-2,-2,4,4}, {}, {1,0,0,1});

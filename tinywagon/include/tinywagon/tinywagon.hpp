@@ -140,6 +140,9 @@ namespace tw
             createFromFile(file, monospaced);
         }
 
+        // defined later
+        void tryDefaultFont();
+
         bool createFromTTF(const unsigned char* ttfData, const size_t ttfDataSize, bool monospaced = false);
         void createFromFile(const char* filename, bool monospaced = false);
 
@@ -275,7 +278,7 @@ namespace tw
 
         // if showInCenter is 0, the origin will be at the bottom left corner since it represnets the line in which
         // the text will be drawn at.
-        TextLayout renderText(glm::vec2 position, const char* text, Font font, 
+        TextLayout renderText(glm::vec2 position, const char* text, Font font = {}, 
             float sizePixels = 64.0f, bool showInCenter = true, glm::vec4 color = {1,1,1,1},
             const float spacing = 1, const float lineHeightSpacing = 1, glm::vec4 shadowColor = {0.1,0.1,0.1,1});
 
