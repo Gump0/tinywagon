@@ -47,46 +47,20 @@ int main(void)
 
 	//glfwSwapInterval(1); //vsync
 
-	//---------------- TRIANGLE ----------------
-	//position, color, uv
-	float vertices[] =
-	{
-		-0.5f, -0.5f,  1,1,1,1,  0.f, 0.f, 
-		 0.5f, -0.5f,  1,1,1,1,  1.f, 0.f,
-		 0.0f,  0.5f,  1,1,1,1,  0.f, 1.f,
-	};
-
-	GLuint vao = 0;
-	GLuint vbo = 0;
-
-	glGenVertexArrays(1, &vao);
-	glGenBuffers(1, &vbo);
-
-	glBindVertexArray(vao);
-
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 8, 0);
-	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(float) * 8, (void*)(sizeof(float) * 2));
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 8, (void*)(sizeof(float) * 6));
-
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
-	glEnableVertexAttribArray(2);
-	// -----------------------------------------
 	tw::init();
 
 	tw::Renderer2D renderer;
 	renderer.create();
 
+	// example of how to create default shader (look to header file to see how to import custom)
+	// tw::Shader shader;
+	// shader.createDefaultShader();
 
-	tw::Shader shader;
-	shader.createDefaultShader();
-
+	// create a single texture eaxmple.
 	tw::Texture texture1(RESOURCES_PATH "grass.png");
 	texture1.bind();
 
+	// create texture atlas with no seams
 	tw::Texture texture2;
 	texture2.loadFromFileWithPixelPadding(RESOURCES_PATH "structuredArt.png", 3, 2);
 	tw::TextureAtlasPadding textureAtlas(3, 2, texture2.getSize().x, texture2.getSize().y);
@@ -94,9 +68,6 @@ int main(void)
 	// Example of loading font.
 	// but for this example we use the default font
 	// tw::Font font(RESOURCES_PATH "font.ttf");
-
-	std::cout << "loading texture from: " << RESOURCES_PATH << "grass.png" << std::endl;
-	std::cout << "loading texture from: " << RESOURCES_PATH << "strucuredArt.png" << std::endl;
 
 	float lastFrameTime = (float)glfwGetTime();
 

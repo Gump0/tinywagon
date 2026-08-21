@@ -7,19 +7,19 @@
 A lightweight game development framework built with C++23 and OpenGL.
 
 ![C++23](https://img.shields.io/badge/C%2B%2B-23-blue?style=flat-square)
-![OpenGL](https://img.shields.io/badge/OpenGL-3-green?style=flat-square)
+![OpenGL](https://img.shields.io/badge/OpenGL-3.3-green?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-orange?style=flat-square)
 
 ---
 
 ## Features
 
-- Simple implementation of numerous vital game systems
+- Simple implementations of several essential game systems
 - Render shapes of any color or texture you want (square, triangles) <!-- TODO ADD MORE SHAPES -->
-- Import, organize and automatically splice texture atlas'
+- Import, organize and automatically splice texture atlases
 - Easy implementation for custom shaders and GLSL code
 - Text rendering
-- Easily convert from screen-space to normalized coordinates (useful for game UI)
+- Easily convert between screen-space and normalized coordinates (useful for game UI)
 - Various helper methods for each major core system
 - Built-in common math functions.
 - **Super** easy to implement into any OpenGL codebase! (copy tinywagon folder into root)
@@ -58,20 +58,24 @@ cmake --build build --target tinywagondemo
 cd build
 ./tinywagondemo
 ```
+### How To Include
+Simply copy the tinywagon/ directory (both tinywagon.cpp & tinywagon.hpp) into your projects dependencies!
+
+> *PLEASE REMEMBER THAT DEPENDENCIES INCLUDED IN THE [THIRDPARTY/](https://github.com/Gump0/tinywagon/tree/main/thirdparty) DIRECTORY ARE REQUIRED FOR TINYWAGON TO WORK.**
 <br>
 
-<!-- THIS IS BIG MAKE A SIMPLE GAME FOR A DEMO -->
-<!-- ## Demo
-
-Real-time point-light and ambient lighting simulation.\
-Implemented with `OpenGL` and `GLSL` shader scripting.
+## Demonstration
 <p>
-  <img src="/readme-src/light-shading-demo.gif" width="800">
+  <img src="/readme-src/2drenderer.gif" width="800">
 </p>
 
+Easily load and render two dimensional sprites to the screen with minimal code. With the addition of texture atlases!
+
 <p>
-  <img src="/readme-src/light-color-demo.gif" width="800">
-</p> -->
+  <img src="/readme-src/textrenderingdemo.png" width="800">
+</p>
+
+Robust text editing with the option for custom fonts!
 
 ---
 
