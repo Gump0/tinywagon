@@ -16,6 +16,7 @@ A lightweight game development framework built with C++23 and OpenGL.
 
 - Simple implementations of several essential game systems
 - Render shapes of any color or texture you want (square, triangles) <!-- TODO ADD MORE SHAPES -->
+- Game camera system
 - Import, organize and automatically splice texture atlases
 - Easy implementation for custom shaders and GLSL code
 - Text rendering
