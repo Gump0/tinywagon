@@ -260,21 +260,26 @@ namespace tw
         // used internally.
         void resetShader();
 
+        // render triangle to screen using world coordinates
+        void renderTriangle(const glm::vec4 &p1, const glm::vec4 &p2, const glm::vec4 &p3,
+            Texture texture = {}, glm::vec4 textureCoords = {0,0,1,1}, glm::vec4 colors = {1,1,1,1});
+
         // render a triange to the screen using opengl normalized coordinates
 		void renderTriangleFromNormalizedPositions(const glm::vec4 &p1, const glm::vec4 &p2, const glm::vec4 &p3,
-			Texture texture, glm::vec4 textureCoords, glm::vec4 colors);
+			Texture texture, glm::vec4 textureCoords = {0,0,1,1}, glm::vec4 colors = {1,1,1,1});
         
         // ^^ but can utlize vec2 array for the texture coords 
 		void renderTriangleFromNormalizedPositions(const glm::vec4 &p1, const glm::vec4 &p2, const glm::vec4 &p3,
 			Texture texture, const glm::vec2 textureCoords[3], const glm::vec4 colors[3]);
 
-        // TODO : make pixel coord vers of ^^
-        // similar to how renderRect was programmed.
-        // void renderTriangle
-
         // draw a rectangle with color and/or texture (position = {x, y, width, height})
         void renderRect(const glm::vec4 &position, Texture texture = {}, glm::vec4 colors = {1,1,1,1},
             glm::vec4 textureCoords = {0,0,1,1}, float rotationRadians = 0.0f, glm::vec2 pivot = {0, 0});
+
+        // draw a rectangle with color and/or texture (position = {x, y, width, height})
+        // using opengl normalized coordinates
+        void renderRectFromNormalizedPostions(const glm::vec4 position, Texture texture = {}, glm::vec4 colors = {1,1,1,1},
+            glm::vec4 textureCoords = {0,0,1,1}, float rotationRadians = 0.0f, glm::vec2 pivot = {0,0});
 
         // if showInCenter is 0, the origin will be at the bottom left corner since it represnets the line in which
         // the text will be drawn at.

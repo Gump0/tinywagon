@@ -140,13 +140,18 @@ int main(void)
 
 		renderer.renderTriangleFromNormalizedPositions(
 			{-0.1, -0.1, 0, 1}, {0.1, -0.1, 0, 1}, {0.0, 0.5, 0, 1}, { }, {0, 0, 1, 1}, PURPLE);
+
+		// render triangle based off world coords
+		renderer.renderTriangle({150, 150, 0, 0}, {-150, -150, 0, 0}, {0, 0, 0, 0}, texture1, {0, 0, 1, 1}, PINK);
 		
 		// render single square texture example.
-		renderer.renderRect({ 50, 50, 100, 100}, texture1, {1, 1, 1, 1}, {0, 0, 1, 1}, 0);
+		renderer.renderTriangle({150, 150, 0, 1}, {-150, 150, 0, 1}, {0, -150, 0, 1}, texture1, {0, 0, 1, 1}, PINK);
 
 		// render textures from texture atlas example
 		renderer.renderRect({200,200, 100, 100}, texture2, {1,1,1,1}, textureAtlas.get(0, 0));
 		renderer.renderRect({300,200, 100, 100}, texture2, {1,1,1,1}, textureAtlas.get(1, 1, true));
+
+		renderer.renderRectFromNormalizedPostions({-0.3, -0.3, 0.1, 0.1}, texture1);
 
 		// render entire font texture
 		// renderer.renderRect({400, 400, 1000, 1000} , { }, {0.3, 0.1, 0.1, 1});

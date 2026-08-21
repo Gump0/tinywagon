@@ -1038,6 +1038,32 @@ namespace tw
         triangleDataBuffer = 0;
     }
 
+    void Renderer2D::renderTriangle(const glm::vec4 &p1, const glm::vec4 &p2, const glm::vec4 &p3,
+        Texture texture, glm::vec4 textureCoords, glm::vec4 colors)
+    {
+        if (windowH == 0 || windowW == 0)
+        {
+            return;
+        }
+
+        glm::mat4 projection = glm::ortho(0.0f, (float)windowW, (float)windowH, 0.0f, -1.0f, 1.0f);
+        glm::mat4 transform = projection * camera.getMatrix((float)windowW, (float)windowH);
+
+        glm::vec4 t1 = transform * glm::vec4(p1.x, p1.y, 0.0f, 1.0f);
+        glm::vec4 t2 = transform * glm::vec4(p2.x, p2.y, 0.0f, 1.0f);
+        glm::vec4 t3 = transform * glm::vec4(p3.x, p3.y, 0.0f, 1.0f);
+
+        glm::vec4 colorsVector[3] = { colors, colors, colors };
+
+        float u0 = textureCoords.x;
+        float v0 = textureCoords.y;
+        float u1 = textureCoords.z;
+        float v1 = textureCoords.w;
+        glm::vec2 textureCoordsVector[3] = { {u0, v0}, {u1, v0}, {u1, v1} };
+
+        renderTriangleFromNormalizedPositions(t1, t2, t3, texture, textureCoordsVector, colorsVector);
+    }
+
 	void Renderer2D::renderTriangleFromNormalizedPositions(const glm::vec4 &p1, const glm::vec4 &p2, const glm::vec4 &p3,
 		Texture texture, glm::vec4 textureCoords, glm::vec4 colors)
 	{
@@ -1055,6 +1081,11 @@ namespace tw
 	void Renderer2D::renderTriangleFromNormalizedPositions(const glm::vec4 &p1, const glm::vec4 &p2, const glm::vec4 &p3,
 		Texture texture, const glm::vec2 textureCoords[3], const glm::vec4 colors[3])
 	{
+        if (windowH == 0 || windowW == 0)
+        {
+            return;
+        }
+
 		TriangleData triangleData;
 
 		TriangleVertexData first = {p1, colors[0], textureCoords[0]};
@@ -1104,6 +1135,45 @@ namespace tw
         glm::vec4 topRight = transform * glm::vec4(x + width, y, 0.0f, 1.0f);
         glm::vec4 bottomLeft = transform * glm::vec4(x, y + height, 0.0f, 1.0f);
         glm::vec4 bottomRight = transform * glm::vec4(x + width, y + height, 0.0f, 1.0f);
+
+        glm::vec2 uvTopLeft = { textureCoords.x, textureCoords.w };
+        glm::vec2 uvTopRight = { textureCoords.z, textureCoords.w };
+        glm::vec2  uvBottomLeft = { textureCoords.x, textureCoords.y };
+        glm::vec2 uvBottomRight = { textureCoords.z, textureCoords.y };
+
+        glm::vec4 colorsVector[3] = { colors, colors, colors };
+        glm::vec2 firstTriangleTextureCoords[3] = { uvTopLeft, uvTopRight, uvBottomRight };
+        glm::vec2 secondTriangleTextureCoords[3] = { uvTopLeft, uvBottomRight, uvBottomLeft };
+
+        renderTriangleFromNormalizedPositions(topLeft, topRight, bottomRight, texture, firstTriangleTextureCoords, colorsVector);
+        renderTriangleFromNormalizedPositions(topLeft, bottomRight, bottomLeft, texture, secondTriangleTextureCoords, colorsVector);
+    }
+
+    void Renderer2D::renderRectFromNormalizedPostions(const glm::vec4 position, Texture texture, glm::vec4 colors,
+        glm::vec4 textureCoords, float rotationRadians, glm::vec2 pivot)
+    {
+        if (windowH == 0 || windowW == 0)
+        {
+            return;
+        }
+
+        float x = position.x;
+        float y = position.y;
+        float width = position.z;
+        float height = position.w;
+
+        glm::vec2 center = {x + width / 2.0f, y + height / 2.0f};
+        glm::vec2 pivotPosition = center + pivot;
+
+        glm::mat4 model(1.0f);
+        model = glm::translate(model, glm::vec3(pivotPosition, 0.0f));
+        model = glm::rotate(model, rotationRadians, glm::vec3(0.0f, 0.0f, 1.0f));
+        model = glm::translate(model, glm::vec3(-pivotPosition, 0.0f));
+
+        glm::vec4 topLeft = glm::vec4(x, y, 0.0f, 1.0f);
+        glm::vec4 topRight = glm::vec4(x + width, y, 0.0f, 1.0f);
+        glm::vec4 bottomLeft = glm::vec4(x, y + height, 0.0f, 1.0f);
+        glm::vec4 bottomRight = glm::vec4(x + width, y + height, 0.0f, 1.0f);
 
         glm::vec2 uvTopLeft = { textureCoords.x, textureCoords.w };
         glm::vec2 uvTopRight = { textureCoords.z, textureCoords.w };
